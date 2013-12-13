@@ -176,6 +176,104 @@ $.extend(KhanUtil, {
             "300": 0.9987, "301": 0.9987, "302": 0.9987, "303": 0.9988, "304": 0.9988,
             "305": 0.9989, "306": 0.9989, "307": 0.9989, "308": 0.999, "309": 0.999
         }[z]);
-    }
+    },
+    
+    //Inverse Cumulative Normal Function (Beasley-Springer/Moro approximation)    
 
+    inverseCumulativeNormal: function(p)  {
+	    var a;
+	    var b;
+	    var c;
+	    var x;
+	    var absX;
+	    var r;
+	    
+	    a = new Array(4);
+	    a[0] =   2.50662823884;
+	    a[1] = -18.61500062529;
+	    a[2] =  41.39119773534;
+	    a[3] = -25.44106049637;
+	    
+	    
+	    b = new Array(4);
+	    b[0] =   8.47351093090;
+	    b[1] =  23.08336743743;
+	    b[2] = -21.06224101826;
+	    b[3] =   3.13082909833;
+	    
+	    c = new Array(9);
+	    c[0] = 0.3374754822726147; 
+	    c[1] = 0.9761690190917186;
+	    c[2] = 0.1607979714918209;
+	    c[3] = 0.0276438810333863;
+	    c[4] = 0.0038405729373609;
+	    c[5] = 0.0003951896511919;
+	    c[6] = 0.0000321767881768;
+	    c[7] = 0.0000002888167364;
+	    c[8] = 0.0000003960315187;
+	    
+	    x = p - 0.5;
+	    absX = (x > 0) ? x : -x;
+	  
+	    if(absX < 0.42) //Beasley-Springer
+	    {
+	        var y = x*x;
+	        r = x *
+	            (((a[3] * y + a[2]) * y + a[1]) * y + a[0])  /
+	            ((((b[3] * y + b[2]) * y + b[1]) * y + b[0]) * y + 1.0);
+	    }
+	    else //Moro
+	    {
+	        r = p;
+	        if (x > 0.0)
+	        {
+	        	r = 1.0 - p;
+	        }
+	        r = Math.log(-Math.log(r));
+	        r = c[0] + r*(c[1] + r*(c[2] + r*(c[3] + r*(c[4] + r*(c[5] + r*(c[6] + r*(c[7] + r*c[8])))))));
+	        if (x < 0.0)
+	        {
+	           r = -r;
+	        }
+	    }
+	    return r;
+    },
+    
+    //Cumulative Normal Distribution Function (Abramowitz-Stegun Approximation)
+    cumulativeNormal: function(z) {
+    	var a;
+    	var r;
+  	
+    	a = new Array(5);
+    	a[0] =  0.319381530;
+    	a[1] = -0.356563782;
+    	a[2] =  1.781477937;
+    	a[3] = -1.821255978;
+    	a[4] =  1.330274429;
+    	
+        if (z < -7.0) //Guards against overflows
+        {
+        	r = KhanUtil.gaussianPDF(0.0, 1.0, z)/Math.sqrt(1.0 + z*z);
+        }
+        else
+        {
+        	if (z > 7.0)
+        	{
+        		r = 1.0 - KhanUtil.cumulativeNormal(-z);
+        	}
+        	else
+        	{
+        		var absZ;
+        		var t;
+        		absZ = (z > 0) ? z : -z;
+        		t = 1.0/(1.0 + 0.2316419 * absZ);
+        		r = 1 - KhanUtil.gaussianPDF(0.0, 1.0, z)*(t*(a[0] + t*(a[1] + t*(a[2] + t*(a[3] + t*a[4])))));
+        		if (z < 0.0)
+        		{
+        			r = 1.0 - r;
+        		}
+        	}
+        }
+    	return r;
+    }
 });
