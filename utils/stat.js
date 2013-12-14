@@ -1,48 +1,48 @@
-    $.extend(KhanUtil, {
-        sum: function(values) {
-            var sum = 0;
-    
-            $.each(values, function(index, value) {
-                sum += value;
-            });
-            return sum;
-        },
-    
-        mean: function(values) {
-            return KhanUtil.sum(values) / values.length;
-        },
-    
-        median: function(values) {
-            var sortedInts, median;
-            sortedInts = KhanUtil.sortNumbers(values);
-    
-            if (values.length % 2 === 0) {
-                median = KhanUtil.roundTo(1,
-                    (sortedInts[(values.length / 2) - 1] + sortedInts[values.length / 2]) / 2);
+$.extend(KhanUtil, {
+    sum: function(values) {
+        var sum = 0;
+
+        $.each(values, function(index, value) {
+            sum += value;
+        });
+        return sum;
+    },
+
+    mean: function(values) {
+        return KhanUtil.sum(values) / values.length;
+    },
+
+    median: function(values) {
+        var sortedInts, median;
+        sortedInts = KhanUtil.sortNumbers(values);
+
+        if (values.length % 2 === 0) {
+            median = KhanUtil.roundTo(1,
+                (sortedInts[(values.length / 2) - 1] + sortedInts[values.length / 2]) / 2);
+        } else {
+            median = sortedInts[Math.floor(values.length / 2)];
+        }
+        return median;
+    },
+
+    mode: function(values) {
+        var numInstances = [];
+        var modeInstances = -1;
+
+        var mode;
+        for (var i = 0; i < values.length; i++) {
+            if (!numInstances[values[i]]) {
+                numInstances[values[i]] = 1;
             } else {
-                median = sortedInts[Math.floor(values.length / 2)];
-            }
-            return median;
-        },
-    
-        mode: function(values) {
-            var numInstances = [];
-            var modeInstances = -1;
-    
-            var mode;
-            for (var i = 0; i < values.length; i++) {
-                if (!numInstances[values[i]]) {
-                    numInstances[values[i]] = 1;
-                } else {
-                    numInstances[values[i]] += 1;
-                    if (numInstances[values[i]] > modeInstances) {
-                        modeInstances = numInstances[values[i]];
-                        mode = values[i];
-                    }
+                numInstances[values[i]] += 1;
+                if (numInstances[values[i]] > modeInstances) {
+                    modeInstances = numInstances[values[i]];
+                    mode = values[i];
                 }
             }
-    
-            // iterate again to check for 'no mode'
+        }
+
+        // iterate again to check for 'no mode'
         for (var i = 0; i < numInstances.length; i++) {
             if (numInstances[i]) {
                 if (i !== mode && numInstances[i] >= modeInstances) {
@@ -50,21 +50,21 @@
                 }
             }
         }
-    
+
         return mode;
     },
-    
+
     variance: function(values) {
         var xbar = KhanUtil.mean(values);
         var n = values.length;
-    
+
         var sum = 0;
         $.each(values, function(i, x_i) {
             sum += (x_i - xbar) * (x_i - xbar);
         });
         return sum / (n - 1);
     },
-    
+
     variancePop: function(values) {
         var xbar = KhanUtil.mean(values);
         var N = values.length;
@@ -180,7 +180,7 @@
     
     //Inverse Cumulative Normal Function (Beasley-Springer/Moro approximation)    
     
-    inverseCumulativeNormal: function(p)  {
+    inverseCumulativeNormal: function(p) {
         var a;
         var b;
         var c;
@@ -227,13 +227,13 @@
             r = p;
             if (x > 0.0)
             {
-            	r = 1.0 - p;
+                r = 1.0 - p;
             }
             r = Math.log(-Math.log(r));
             r = c[0] + r*(c[1] + r*(c[2] + r*(c[3] + r*(c[4] + r*(c[5] + r*(c[6] + r*(c[7] + r*c[8])))))));
             if (x < 0.0)
             {
-               r = -r;
+                r = -r;
             }
         }
         return r;
@@ -250,30 +250,31 @@
         a[2] =  1.781477937;
         a[3] = -1.821255978;
         a[4] =  1.330274429;
-    	
+        
         if (z < -7.0) //Guards against overflows
+        {
+            r = KhanUtil.gaussianPDF(0.0, 1.0, z)/Math.sqrt(1.0 + z*z);
+        }
+        else
+        {
+            if (z > 7.0)
             {
-                r = KhanUtil.gaussianPDF(0.0, 1.0, z)/Math.sqrt(1.0 + z*z);
+                r = 1.0 - KhanUtil.cumulativeNormal(-z);
             }
             else
             {
-                if (z > 7.0)
+                var absZ;
+                var t;
+                absZ = (z > 0) ? z : -z;
+                t = 1.0/(1.0 + 0.2316419 * absZ);
+                r = 1 - KhanUtil.gaussianPDF(0.0, 1.0, z)*(t*(a[0] + t*(a[1] + t*(a[2] + t*(a[3] + t*a[4])))));
+                if (z < 0.0)
                 {
-            	    r = 1.0 - KhanUtil.cumulativeNormal(-z);
+                     r = 1.0 - r;
                 }
-            	else
-            	{
-            	    var absZ;
-            	    var t;
-            	    absZ = (z > 0) ? z : -z;
-            	    t = 1.0/(1.0 + 0.2316419 * absZ);
-            	    r = 1 - KhanUtil.gaussianPDF(0.0, 1.0, z)*(t*(a[0] + t*(a[1] + t*(a[2] + t*(a[3] + t*a[4])))));
-            	    if (z < 0.0)
-            	    {
-                         r = 1.0 - r;
-            		}
-            	}
             }
-        	return r;
         }
-    });
+        return r;
+    }
+    
+});
